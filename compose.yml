@@ -1,0 +1,48 @@
+name: api-livres
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: colonelfrere/api-livres:1.0.0
+    container_name: api-livres-node
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      MONGO_URL: mongodb://mongo:27017/booksdb
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - api-livres-network
+    labels:
+      project: "api-livres"
+      role: "api"
+
+  mongo:
+    image: mongo:7.0
+    container_name: api-livres-mongo
+    restart: unless-stopped
+    volumes:
+      - api-livres-mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - api-livres-network
+    labels:
+      project: "api-livres"
+      role: "database"
+
+volumes:
+  api-livres-mongo-data:
+    name: api-livres-mongo-data
+
+networks:
+  api-livres-network:
+    name: api-livres-network
